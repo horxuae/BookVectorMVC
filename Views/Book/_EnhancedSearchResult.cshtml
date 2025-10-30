@@ -1,0 +1,190 @@
+@model IEnumerable<BookVectorMVC.Models.SearchResult>
+
+<style>
+    .search-results {
+        margin-top: 20px;
+    }
+
+    .search-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+    }
+
+    .table {
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+        .table th {
+            background-color: #343a40 !important;
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: #dee2e6;
+        }
+
+        .table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+    .progress {
+        margin: 0;
+    }
+
+    .badge {
+        font-size: 0.8em;
+    }
+</style>
+
+<div class="search-results">
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            <strong>錯誤:</strong> @ViewBag.Error
+        </div>
+    }
+    else if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            <strong>查無結果</strong> - 請嘗試不同的搜尋條件
+        </div>
+    }
+    else
+    {
+        <div class="search-info">
+            <h4>搜尋結果</h4>
+            <p>
+                <strong>搜尋方式:</strong> @ViewBag.SearchMethod<br/>
+                @if (ViewBag.SearchQuery != null)
+                {
+                    <strong>搜尋關鍵字:</strong> @ViewBag.SearchQuery<br/>
+                }
+                <strong>找到結果:</strong> @ViewBag.ResultCount 筆
+            </p>
+        </div>
+
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr class="text-center">
+                    <th style="width: 60px;">排名</th>
+                    <th style="width: 80px;">ID</th>
+                    <th style="width: 200px;">書名</th>
+                    <th>描述</th>
+                    <th style="width: 100px;">位置</th>
+                    <th style="width: 100px;">相似度</th>
+                    <th style="width: 80px;">評級</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var result in Model)
+                {
+                    var scoreClass = "";
+                    var scoreIcon = "";
+                    var scoreText = "";
+                    
+                    if (result.Score >= 0.8)
+                    {
+                        scoreClass = "text-success";
+                        scoreIcon = "🟢";
+                        scoreText = "優秀";
+                    }
+                    else if (result.Score >= 0.6)
+                    {
+                        scoreClass = "text-warning";
+                        scoreIcon = "🟡";
+                        scoreText = "良好";
+                    }
+                    else if (result.Score >= 0.4)
+                    {
+                        scoreClass = "text-primary";
+                        scoreIcon = "🔵";
+                        scoreText = "普通";
+                    }
+                    else
+                    {
+                        scoreClass = "text-muted";
+                        scoreIcon = "⚪";
+                        scoreText = "較低";
+                    }
+
+                    <tr>
+                        <td class="text-center">
+                            @if (result.Rank > 0)
+                            {
+                                if (result.Rank == 1)
+                                {
+                                    <span>🥇 @result.Rank</span>
+                                }
+                                else if (result.Rank == 2)
+                                {
+                                    <span>🥈 @result.Rank</span>
+                                }
+                                else if (result.Rank == 3)
+                                {
+                                    <span>🥉 @result.Rank</span>
+                                }
+                                else
+                                {
+                                    <span>@result.Rank</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-center">@result.Book.BookId</td>
+                        <td>
+                            <strong>@result.Book.Title</strong>
+                        </td>
+                        <td>
+                            <div style="max-height: 60px; overflow-y: auto;">
+                                @result.Book.Description
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span>@result.Book.Position</span>
+                        </td>
+                        <td class="text-center @scoreClass">
+                            <div>
+                                <strong>@result.Score.ToString("0.000")</strong>
+                            </div>
+                            <small>@scoreIcon @scoreText</small>
+                        </td>
+                        <td class="text-center">
+                            @if (result.Score >= 0.8)
+                            {
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" style="width: @((result.Score * 100).ToString("0"))%"></div>
+                                </div>
+                            }
+                            else if (result.Score >= 0.6)
+                            {
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-warning" style="width: @((result.Score * 100).ToString("0"))%"></div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-info" style="width: @((result.Score * 100).ToString("0"))%"></div>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <small>💡 顯示前 @Model.Count() 筆最相關的結果</small>
+        </div>
+    }
+</div>

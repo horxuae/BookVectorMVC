@@ -1,0 +1,23 @@
+@model IEnumerable<BookVectorMVC.Models.SearchResult>
+
+@if (Model == null || !Model.Any())
+{
+    <div>查無結果</div>
+}
+else
+{
+    <table border="1" cellpadding="4" cellspacing="0">
+        <tr><th>排名</th><th>BookId</th><th>Title</th><th>Description</th><th>Position</th><th>Score</th></tr>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@(r.Rank == -1 ? "-" : r.Rank.ToString())</td>
+                <td>@r.Book.BookId</td>
+                <td>@r.Book.Title</td>
+                <td>@r.Book.Description</td>
+                <td>@r.Book.Position</td>
+                <td>@r.Score.ToString("0.000")</td>
+            </tr>
+        }
+    </table>
+}

@@ -1,0 +1,73 @@
+@model IEnumerable<BookVectorMVC.Models.Book>
+@{
+    ViewBag.Title = "書籍管理(簡易版)";
+}
+
+<h2>書籍管理</h2>
+
+<h3>新增書籍</h3>
+<form action="/Book/Add" method="post">
+    <div>
+        <label>Title</label><br />
+        <input name="title" style="width:400px" />
+    </div>
+    <div>
+        <label>Description</label><br />
+        <textarea name="description" style="width:400px;height:80px"></textarea>
+    </div>
+    <div>
+        <label>Position (e.g. A-12)</label><br />
+        <input name="position" />
+    </div>
+    <br />
+    <button type="submit">新增</button>
+</form>
+
+<hr />
+
+<h3>查詢書籍 (可用位置 / 書名 / 關鍵字)</h3>
+<div>
+    <input id="q_query" placeholder="向量比對 (關鍵字)" style="width:300px" />
+    <input id="q_position" placeholder="位置 (精確查) e.g. A-12" style="width:150px" />
+    <input id="q_title" placeholder="書名 (模糊查)" style="width:200px" />
+    <button id="btnSearch">搜尋</button>
+</div>
+
+<div id="resultArea" style="margin-top:20px"></div>
+
+<hr />
+
+<h3>目前書籍</h3>
+<table border="1" cellpadding="4" cellspacing="0">
+    <tr class="text-center">
+        <th>ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Position</th>
+    </tr>
+    @foreach (var b in Model)
+    {
+        <tr>
+            <td>@b.BookId</td>
+            <td>@b.Title</td>
+            <td>@b.Description</td>
+            <td>@b.Position</td>
+        </tr>
+    }
+</table>
+
+@section scripts {
+    <script src="/Scripts/jquery-3.4.1.min.js"></script>
+    <script>
+        $(function() {
+            $('#btnSearch').click(function() {
+                var q = $('#q_query').val();
+                var p = $('#q_position').val();
+                var t = $('#q_title').val();
+                $.post('/Book/Search', { query: q, position: p, title: t }, function(html) {
+                    $('#resultArea').html(html);
+                });
+            });
+        });
+    </script>
+}
