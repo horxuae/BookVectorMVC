@@ -181,7 +181,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="stats-badge" style="background: var(--info-gradient);">
-                                <h3 class="mb-2">@(stats.ContainsKey("AvgVectorDimension") ? Math.Round((double)stats["AvgVectorDimension"], 1) : 0)</h3>
+                                <h3 class="mb-2">@(stats.ContainsKey("AvgVectorDimension") ? Math.Round(Convert.ToDouble(stats["AvgVectorDimension"]), 1) : 0)</h3>
                                 <small>📏 平均維度</small>
                             </div>
                         </div>

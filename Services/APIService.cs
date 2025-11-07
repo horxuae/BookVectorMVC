@@ -1,69 +1,88 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 
-namespace BookVectorMVC.Services
+namespace BookVectorMVC.Services;
+
+/// <summary>
+/// API 服務 - 處理 Jina AI 向量化服務
+/// </summary>
+public class ApiService : IApiService
 {
-    public class APIService
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<ApiService> _logger;
+    private readonly string _apiKey;
+    private readonly string _baseUrl;
+    private readonly string _model;
+
+    public int VectorDimension { get; }
+
+    public ApiService(HttpClient httpClient, IConfiguration configuration, ILogger<ApiService> logger)
     {
-        private static string _apiKey = "jina_2db4e931501d4a83a0fa469ffc715253CEFZ3J2fSkdHxIHnCRoe2dRiNbZe";
-        private static string _url = "https://api.jina.ai/v1/embeddings";
-        public int VectorDimension => 1024; // 固定維度，"jina-embeddings-v3" 是採用1024維
+        _httpClient = httpClient;
+        _configuration = configuration;
+        _logger = logger;
 
-        /// <summary>
-        /// 取得文字的語意向量（使用 Jina Embeddings v3）
-        /// 同步呼叫方式，方便 .NET Framework MVC 使用
-        /// </summary>
-        /// <param name="text">輸入文字</param>
-        /// <returns>浮點向量陣列</returns>
-        public float[] GetEmbedding(string text)
+        _apiKey = _configuration["JinaAI:ApiKey"] ?? throw new InvalidOperationException("JinaAI:ApiKey is not configured");
+        _baseUrl = _configuration["JinaAI:BaseUrl"] ?? "https://api.jina.ai/v1/embeddings";
+        _model = _configuration["JinaAI:Model"] ?? "jina-embeddings-v3";
+        VectorDimension = _configuration.GetValue<int>("JinaAI:VectorDimension", 1024);
+
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+    }
+
+    /// <summary>
+    /// 取得文字的語意向量（使用 Jina Embeddings v3）
+    /// </summary>
+    /// <param name="text">輸入文字</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>浮點向量陣列</returns>
+    public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(text))
         {
-            if (string.IsNullOrWhiteSpace(text)) {
-                return new float[0]; 
-            }
+            _logger.LogWarning("Empty text provided for embedding");
+            return Array.Empty<float>();
+        }
 
-            try
+        try
+        {
+            var requestBody = new
             {
-                using (var client = new HttpClient())
-                {
-                    client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _apiKey);
+                model = _model,
+                task = "text-matching",
+                input = new[] { text }
+            };
 
-                    // 建立 JSON 請求內容
-                    var body = new
-                    {
-                        model = "jina-embeddings-v3",
-                        task = "text-matching",
-                        input = new[] { text }
-                    };
-                    string jsonBody = JsonConvert.SerializeObject(body);
-                    var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                    // 同步呼叫 POST
-                    var response = client.PostAsync(_url, content).Result;
-                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
+            _logger.LogDebug("Requesting embedding for text: {Text}", text[..Math.Min(text.Length, 50)]);
 
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine($"[Jina Error] {response.StatusCode} {jsonResponse}");
-                        return new float[0];
-                    }
+            var response = await _httpClient.PostAsync(_baseUrl, content, cancellationToken);
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                    // 解析 JSON 結果
-                    var jobj = JObject.Parse(jsonResponse);
-                    var arr = jobj["data"]?[0]?["embedding"] as JArray;
-                    if (arr == null) return new float[0];
-
-                    return arr.Select(x => (float)x).ToArray();
-                }
-            }
-            catch (Exception ex)
+            if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine("[Jina Error] " + ex.Message);
-                return new float[0];
+                _logger.LogError("Jina API Error: {StatusCode} {Response}", response.StatusCode, jsonResponse);
+                return Array.Empty<float>();
             }
+
+            using var document = JsonDocument.Parse(jsonResponse);
+            var embeddingArray = document.RootElement
+                .GetProperty("data")[0]
+                .GetProperty("embedding")
+                .EnumerateArray()
+                .Select(x => x.GetSingle())
+                .ToArray();
+
+            _logger.LogDebug("Successfully generated {Dimensions}D embedding", embeddingArray.Length);
+            return embeddingArray;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating embedding for text: {Text}", text[..Math.Min(text.Length, 50)]);
+            return Array.Empty<float>();
         }
     }
 }

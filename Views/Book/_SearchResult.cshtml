@@ -1,23 +1,109 @@
-@model IEnumerable<BookVectorMVC.Models.SearchResult>
+@model List<SearchResult>
 
-@if (Model == null || !Model.Any())
-{
-    <div>查無結果</div>
-}
-else
-{
-    <table border="1" cellpadding="4" cellspacing="0">
-        <tr><th>排名</th><th>BookId</th><th>Title</th><th>Description</th><th>Position</th><th>Score</th></tr>
-        @foreach (var r in Model)
-        {
-            <tr>
-                <td>@(r.Rank == -1 ? "-" : r.Rank.ToString())</td>
-                <td>@r.Book.BookId</td>
-                <td>@r.Book.Title</td>
-                <td>@r.Book.Description</td>
-                <td>@r.Book.Position</td>
-                <td>@r.Score.ToString("0.000")</td>
-            </tr>
-        }
-    </table>
-}
+<div class="search-results mt-3">
+    <h4><i class="fas fa-search"></i> 搜尋結果</h4>
+    
+    @if (ViewBag.SearchMethod != null)
+    {
+        <div class="mb-3">
+            <span class="badge bg-info">@ViewBag.SearchMethod</span>
+            @if (ViewBag.SearchTerm != null)
+            {
+                <span class="ms-2 text-muted">搜尋詞: <strong>@ViewBag.SearchTerm</strong></span>
+            }
+            @if (ViewBag.ResultCount != null)
+            {
+                <span class="ms-2 text-muted">找到 <strong>@ViewBag.ResultCount</strong> 筆結果</span>
+            }
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 沒有找到符合的書籍。
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="fas fa-trophy"></i> 排名</th>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-book"></i> 書名</th>
+                        <th><i class="fas fa-align-left"></i> 描述</th>
+                        <th><i class="fas fa-map-marker-alt"></i> 位置</th>
+                        <th><i class="fas fa-star"></i> 相似度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (r.Rank <= 3)
+                                {
+                                    <span class="badge bg-warning text-dark">#@r.Rank</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">#@r.Rank</span>
+                                }
+                            </td>
+                            <td>@r.Book.BookId</td>
+                            <td>
+                                <strong>@r.Book.Title</strong>
+                                @if (!string.IsNullOrEmpty(r.Book.Vector) && r.Book.Vector != "[]")
+                                {
+                                    <span class="vector-badge badge ms-1">向量化</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(r.Book.Description))
+                                {
+                                    if (r.Book.Description.Length > 100)
+                                    {
+                                        @(r.Book.Description.Substring(0, 100))<text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @r.Book.Description
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">無描述</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(r.Book.Position))
+                                {
+                                    <span class="badge bg-light text-dark">@r.Book.Position</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">未設定</span>
+                                }
+                            </td>
+                            <td>
+                                @if (r.Score < 1.0)
+                                {
+                                    <span class="similarity-score">@r.Score.ToString("F3")</span>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar" style="width: @((r.Score * 100).ToString("F0"))%"></div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">完全匹配</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

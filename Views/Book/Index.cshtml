@@ -1,26 +1,27 @@
-@model IEnumerable<BookVectorMVC.Models.Book>
+@model IEnumerable<Book>
 @{
-    ViewBag.Title = "書籍管理(簡易版)";
+    ViewBag.Title = "書籍管理 (.NET Core 8)";
+    Layout = "_Layout";
 }
 
 <h2>書籍管理</h2>
 
 <h3>新增書籍</h3>
-<form action="/Book/Add" method="post">
-    <div>
-        <label>Title</label><br />
-        <input name="title" style="width:400px" />
+<form asp-controller="Book" asp-action="Add" method="post" class="mb-4">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">書名</label>
+        <input name="title" class="form-control" style="max-width:400px" required />
     </div>
-    <div>
-        <label>Description</label><br />
-        <textarea name="description" style="width:400px;height:80px"></textarea>
+    <div class="mb-3">
+        <label class="form-label">描述</label>
+        <textarea name="description" class="form-control" style="max-width:400px;height:80px"></textarea>
     </div>
-    <div>
-        <label>Position (e.g. A-12)</label><br />
-        <input name="position" />
+    <div class="mb-3">
+        <label class="form-label">位置 (例如: A-12)</label>
+        <input name="position" class="form-control" style="max-width:200px" />
     </div>
-    <br />
-    <button type="submit">新增</button>
+    <button type="submit" class="btn btn-primary">新增書籍</button>
 </form>
 
 <hr />
@@ -56,16 +57,23 @@
     }
 </table>
 
-@section scripts {
-    <script src="/Scripts/jquery-3.4.1.min.js"></script>
+@section Scripts {
     <script>
         $(function() {
             $('#btnSearch').click(function() {
                 var q = $('#q_query').val();
                 var p = $('#q_position').val();
                 var t = $('#q_title').val();
-                $.post('/Book/Search', { query: q, position: p, title: t }, function(html) {
+                
+                $.post('@Url.Action("Search", "Book")', { 
+                    query: q, 
+                    position: p, 
+                    title: t,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                }, function(html) {
                     $('#resultArea').html(html);
+                }).fail(function() {
+                    $('#resultArea').html('<div class="alert alert-danger">搜尋時發生錯誤</div>');
                 });
             });
         });
