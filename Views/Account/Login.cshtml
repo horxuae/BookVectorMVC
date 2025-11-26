@@ -1,0 +1,36 @@
+@model BookVectorMVC.Models.ViewModels.LoginViewModel
+@{
+    ViewBag.Title = "使用者登入";
+    Layout = "_Layout";
+}
+
+<h2>使用者登入</h2>
+
+<form asp-controller="Account" asp-action="Login" method="post" class="col-md-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="@ViewData["ReturnUrl"]" />
+    
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <input asp-for="Username" class="form-control" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+    </div>
+    
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" type="password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    
+    <div class="mb-3 form-check">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label"></label>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">登入</button>
+    <a asp-controller="Account" asp-action="Register" class="btn btn-link">建立新帳戶</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

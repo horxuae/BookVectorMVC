@@ -36,7 +36,42 @@
                         </a>
                     </li>
                 </ul>
-                <span class="navbar-text">
+                <ul class="navbar-nav">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i> @(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><span class="dropdown-item-text">角色: @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt"></i> 登出
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Login", "Account")">
+                                <i class="fas fa-sign-in-alt"></i> 登入
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Register", "Account")">
+                                <i class="fas fa-user-plus"></i> 註冊
+                            </a>
+                        </li>
+                    }
+                </ul>
+                <span class="navbar-text ms-3">
                     <i class="fas fa-robot"></i> AI 驅動的語義搜尋
                 </span>
             </div>

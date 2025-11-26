@@ -132,6 +132,78 @@ public class BookController : Controller
     }
 
     /// <summary>
+    /// 編輯書籍頁面
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var book = await _bookService.GetBookByIdAsync(id, cancellationToken);
+            if (book == null)
+            {
+                TempData["Error"] = "找不到指定的書籍";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = new BookVectorMVC.Models.ViewModels.EditBookViewModel
+            {
+                BookId = book.BookId,
+                Title = book.Title,
+                Description = book.Description,
+                Position = book.Position
+            };
+
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading book for edit: {BookId}", id);
+            TempData["Error"] = "載入書籍資料時發生錯誤";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    /// <summary>
+    /// 編輯書籍處理
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(BookVectorMVC.Models.ViewModels.EditBookViewModel model, CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        try
+        {
+            var book = await _bookService.GetBookByIdAsync(model.BookId, cancellationToken);
+            if (book == null)
+            {
+                TempData["Error"] = "找不到指定的書籍";
+                return RedirectToAction(nameof(Index));
+            }
+
+            book.Title = model.Title;
+            book.Description = model.Description;
+            book.Position = model.Position;
+
+            await _bookService.UpdateBookAsync(book, cancellationToken);
+            TempData["Success"] = $"成功更新書籍：{book.Title}";
+            _logger.LogInformation("Successfully updated book: {Title} (ID: {BookId})", book.Title, book.BookId);
+            
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating book: {BookId}", model.BookId);
+            TempData["Error"] = "更新書籍時發生錯誤";
+            return View(model);
+        }
+    }
+
+    /// <summary>
     /// 刪除書籍
     /// </summary>
     [HttpPost]

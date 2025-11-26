@@ -9,8 +9,22 @@ CREATE TABLE Books (
     Description NVARCHAR(MAX) NULL,
     Position NVARCHAR(100) NULL, -- 實體位置或標籤
     Vector NVARCHAR(MAX) NOT NULL, -- JSON 格式的向量資料
-    CreatedDate DATETIME2 DEFAULT GETDATE(),
-    UpdatedDate DATETIME2 DEFAULT GETDATE()
+    CreatedDate DATETIME DEFAULT GETDATE(),
+    UpdatedDate DATETIME DEFAULT GETDATE()
+);
+GO
+
+-- 創建 Users 資料表
+CREATE TABLE Users (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    PasswordHash NVARCHAR(MAX) NOT NULL,
+    DisplayName NVARCHAR(100) NULL,
+    Role NVARCHAR(20) NOT NULL DEFAULT 'Member',
+    CreatedDate DATETIME DEFAULT GETDATE(),
+    LastLoginDate DATETIME NULL,
+    IsActive BIT DEFAULT 1
 );
 GO
 
@@ -18,6 +32,13 @@ GO
 CREATE INDEX IX_Books_Title ON Books(Title);
 CREATE INDEX IX_Books_Position ON Books(Position);
 CREATE INDEX IX_Books_CreatedDate ON Books(CreatedDate);
+GO
+
+-- 創建 Users 資料表的索引和約束
+CREATE UNIQUE INDEX IX_Users_Username ON Users(Username);
+CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
+CREATE INDEX IX_Users_CreatedDate ON Users(CreatedDate);
+CREATE INDEX IX_Users_Role ON Users(Role);
 GO
 
 -- 創建觸發器自動更新 UpdatedDate
