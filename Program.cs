@@ -33,6 +33,8 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IEnhancedBookService, EnhancedBookService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IApiService, ApiService>();
+builder.Services.AddScoped<IBookSearchService, BookSearchService>();
+builder.Services.AddHttpClient<BookSearchService>();
 
 // 配置 HttpClient
 builder.Services.AddHttpClient();

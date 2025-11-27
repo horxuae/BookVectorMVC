@@ -10,6 +10,15 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 
 ## ✨ 主要功能
 
+### 🤖 AI 聊天機器人書籍助手
+- **智能對話搜尋**: 透過自然語言對話方式搜尋和新增書籍
+- **網路書籍搜尋**: 整合 Google Books API，即時搜尋全球書籍資料庫
+- **一鍵批量新增**: 從搜尋結果中選擇書籍，快速批量加入圖書館
+- **現代化聊天介面**: 浮動式對話視窗，支援桌面與手機響應式設計
+- **完整書籍資訊**: 自動抓取標題、作者、描述、ISBN、出版年份、封面圖片
+- **智能去重**: 避免新增重複書籍到資料庫
+- **權限控制**: 只有管理員可透過機器人新增書籍
+
 ### 📖 書籍管理功能
 - **完整 CRUD 操作**: 新增、查詢、編輯、刪除書籍資料
 - **智慧語義搜尋**: 使用 Jina AI Embeddings v3 模型實現基於語義的書籍搜尋
@@ -48,12 +57,14 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 - **目標框架**: .NET 8.0
 - **資料庫**: SQL Server (使用 Entity Framework Core 8)
 - **向量服務**: Jina AI Embeddings v3 (1024維向量)
+- **外部API**: Google Books API (書籍搜尋)
 - **前端技術**: Bootstrap 5 + jQuery + Font Awesome
 - **JSON處理**: System.Text.Json
 - **套件管理**: NuGet
 - **設計模式**: 依賴注入、Repository Pattern、服務層分離
 - **身份驗證**: ASP.NET Core Identity (Cookie Authentication)
 - **安全加密**: SHA256 演算法
+- **HTTP客戶端**: HttpClient (用於API呼叫)
 
 ### 分層架構設計
 
@@ -61,21 +72,25 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 📁 BookVectorMVC/
 ├── 📁 Controllers/          # MVC 控制器
 │   ├── BookController.cs    # 基本書籍管理
-│   └── EnhancedBookController.cs # 增強功能
+│   ├── EnhancedBookController.cs # 增強功能
+│   └── ChatBotController.cs # AI聊天機器人控制器
 ├── 📁 Models/              # 資料模型
 │   ├── Book.cs             # 書籍實體
 │   ├── SearchResult.cs     # 搜尋結果模型
 │   └── ViewModels/         # 視圖模型
 ├── 📁 Services/            # 業務邏輯層
 │   ├── Interfaces/         # 服務介面
+│   │   └── IBookSearchService.cs # 書籍搜尋服務介面
 │   ├── BookService.cs      # 書籍服務
 │   ├── EnhancedBookService.cs # 增強服務
+│   ├── BookSearchService.cs # 線上書籍搜尋服務
 │   └── ApiService.cs       # API服務
 ├── 📁 Data/                # 資料存取層
 │   └── BookDbContext.cs    # EF Core DbContext
 ├── 📁 Views/               # 視圖層
 │   ├── Book/               # 書籍相關視圖
 │   └── Shared/             # 共用視圖
+│       └── _ChatBot.cshtml # AI聊天機器人UI組件
 ├── 📄 Program.cs           # 應用程式進入點
 ├── 📄 appsettings.json     # 配置文件
 └── 📁 SQL/                 # 資料庫腳本
@@ -174,6 +189,29 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 3. **權限管理**
    - **Member**: 基本的書籍查看和搜尋功能
    - **Admin**: 完整的書籍管理功能（新增、編輯、刪除）
+
+### 🤖 AI聊天機器人使用
+
+1. **開啟聊天機器人**
+   - 在任何頁面右下角點擊 🤖 浮動按鈕
+   - 機器人會自動歡迎並說明功能
+
+2. **搜尋網路書籍**
+   - 在聊天視窗輸入關鍵字（如："程式設計"、"小說"、"機器學習"）
+   - 機器人會自動搜尋 Google Books API
+   - 顯示相關書籍的完整資訊
+
+3. **選擇和新增書籍**
+   - 瀏覽搜尋結果，每本書顯示標題、作者、描述
+   - 勾選想要新增到圖書館的書籍
+   - 點擊「✅ 新增選中的書籍」按鈕
+   - 系統會批量新增並顯示成功訊息
+
+4. **功能特色**
+   - **即時搜尋**: 使用 Google Books API 獲得最新書籍資料
+   - **智能去重**: 自動檢查避免新增重複書籍
+   - **權限保護**: 只有管理員才能透過機器人新增書籍
+   - **錯誤處理**: API 失敗時提供備用模擬資料
 
 ### 書籍管理使用
 
