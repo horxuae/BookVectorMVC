@@ -11,13 +11,15 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 ## ✨ 主要功能
 
 ### 🤖 AI 聊天機器人書籍助手
-- **智能對話搜尋**: 透過自然語言對話方式搜尋和新增書籍
-- **網路書籍搜尋**: 整合 Google Books API，即時搜尋全球書籍資料庫
-- **一鍵批量新增**: 從搜尋結果中選擇書籍，快速批量加入圖書館
-- **現代化聊天介面**: 浮動式對話視窗，支援桌面與手機響應式設計
-- **完整書籍資訊**: 自動抓取標題、作者、描述、ISBN、出版年份、封面圖片
-- **智能去重**: 避免新增重複書籍到資料庫
-- **權限控制**: 只有管理員可透過機器人新增書籍
+- **Perplexity AI 驅動**: 使用先進的 Perplexity AI 進行智能書籍搜尋
+- **智能對話搜尋**: 支援自然語言查詢，如「推薦機器學習入門書籍」
+- **多重搜尋來源**: Perplexity AI → Google Books API → 模擬資料的智能回退機制
+- **優化聊天介面**: 520px×700px 大視窗，支援桌面與手機響應式設計
+- **完整書籍資訊**: 自動抓取標題、作者、描述、ISBN、出版年份等完整資訊
+- **批量選擇新增**: 可視化書籍卡片選擇，支援多選並即時顯示選中計數
+- **流暢滾動體驗**: 優化的滾動條設計，確保所有搜尋結果都能完整顯示
+- **智能去重檢查**: 避免新增重複書籍到資料庫
+- **權限安全控制**: 只有管理員可透過機器人新增書籍
 
 ### 📖 書籍管理功能
 - **完整 CRUD 操作**: 新增、查詢、編輯、刪除書籍資料
@@ -57,7 +59,7 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 - **目標框架**: .NET 8.0
 - **資料庫**: SQL Server (使用 Entity Framework Core 8)
 - **向量服務**: Jina AI Embeddings v3 (1024維向量)
-- **外部API**: Google Books API (書籍搜尋)
+- **外部API**: Perplexity AI API (智能搜尋)、Google Books API (書籍搜尋)
 - **前端技術**: Bootstrap 5 + jQuery + Font Awesome
 - **JSON處理**: System.Text.Json
 - **套件管理**: NuGet
@@ -73,17 +75,20 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 ├── 📁 Controllers/          # MVC 控制器
 │   ├── BookController.cs    # 基本書籍管理
 │   ├── EnhancedBookController.cs # 增強功能
-│   └── ChatBotController.cs # AI聊天機器人控制器
+│   ├── ChatBotController.cs # AI聊天機器人控制器
+│   └── AIAssistantController.cs # AI助手功能控制器
 ├── 📁 Models/              # 資料模型
 │   ├── Book.cs             # 書籍實體
 │   ├── SearchResult.cs     # 搜尋結果模型
 │   └── ViewModels/         # 視圖模型
 ├── 📁 Services/            # 業務邏輯層
 │   ├── Interfaces/         # 服務介面
-│   │   └── IBookSearchService.cs # 書籍搜尋服務介面
+│   │   ├── IBookSearchService.cs # 書籍搜尋服務介面
+│   │   └── IBookRecommendationService.cs # AI推薦服務介面
 │   ├── BookService.cs      # 書籍服務
 │   ├── EnhancedBookService.cs # 增強服務
-│   ├── BookSearchService.cs # 線上書籍搜尋服務
+│   ├── BookSearchService.cs # 線上書籍搜尋服務 (Perplexity AI + Google Books)
+│   ├── BookRecommendationService.cs # AI推薦服務
 │   └── ApiService.cs       # API服務
 ├── 📁 Data/                # 資料存取層
 │   └── BookDbContext.cs    # EF Core DbContext
@@ -129,7 +134,9 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
    }
    ```
 
-4. **設定 Jina AI API 金鑰**
+4. **設定 API 金鑰**
+
+   **Jina AI API 金鑰** (語義搜尋必需):
    - 在 `appsettings.json` 中設定您的 API 金鑰
    ```json
    {
@@ -141,6 +148,25 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
      }
    }
    ```
+
+   **Perplexity AI API 金鑰** (聊天機器人可選):
+   ```powershell
+   # Windows PowerShell
+   $env:PERPLEXITY_API_KEY = "pplx-your-api-key-here"
+   
+   # 進階配置 (可選)
+   $env:PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online"
+   $env:PERPLEXITY_MAX_RESULTS = "8"
+   $env:PERPLEXITY_TEMPERATURE = "0.2"
+   ```
+
+   ```bash
+   # macOS/Linux
+   export PERPLEXITY_API_KEY="pplx-your-api-key-here"
+   export PERPLEXITY_MAX_RESULTS="8"
+   ```
+
+   > 💡 **提示**: 如果沒有設置 Perplexity API，聊天機器人會自動回退到 Google Books API
 
 5. **建立資料庫**
    ```bash
@@ -193,25 +219,32 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 ### 🤖 AI聊天機器人使用
 
 1. **開啟聊天機器人**
-   - 在任何頁面右下角點擊 🤖 浮動按鈕
-   - 機器人會自動歡迎並說明功能
+   - 在任何頁面右下角點擊 🤖 浮動按鈕（具有脈衝動畫效果）
+   - 機器人會顯示歡迎訊息和使用說明
+   - 聊天視窗支援現代化漸層設計和毛玻璃效果
 
-2. **搜尋網路書籍**
-   - 在聊天視窗輸入關鍵字（如："程式設計"、"小說"、"機器學習"）
-   - 機器人會自動搜尋 Google Books API
-   - 顯示相關書籍的完整資訊
+2. **智能書籍搜尋**
+   - 使用自然語言描述需求（如："我想找關於機器學習的入門書籍"）
+   - Perplexity AI 會進行智能分析並搜尋相關書籍
+   - 支援中文書籍優先搜尋，包含經典與新出版作品
 
-3. **選擇和新增書籍**
-   - 瀏覽搜尋結果，每本書顯示標題、作者、描述
-   - 勾選想要新增到圖書館的書籍
-   - 點擊「✅ 新增選中的書籍」按鈕
-   - 系統會批量新增並顯示成功訊息
+3. **瀏覽搜尋結果**
+   - 搜尋結果以美觀的卡片形式展示（520px 寬視窗）
+   - 每本書顯示完整資訊：標題、作者、描述、ISBN、出版年份
+   - 優化的滾動設計確保所有結果都能完整瀏覽
 
-4. **功能特色**
-   - **即時搜尋**: 使用 Google Books API 獲得最新書籍資料
-   - **智能去重**: 自動檢查避免新增重複書籍
-   - **權限保護**: 只有管理員才能透過機器人新增書籍
-   - **錯誤處理**: API 失敗時提供備用模擬資料
+4. **選擇和新增書籍**
+   - 點擊書籍卡片或勾選 checkbox 進行選擇
+   - 即時顯示「已選擇 X / Y 本書籍」計數
+   - 選中的書籍會有視覺回饋（藍色背景 + ✓ 標記）
+   - 點擊「✅ 新增選中的書籍」批量加入圖書館
+
+5. **進階功能特色**
+   - **多重API來源**: Perplexity AI → Google Books → 備用資料
+   - **響應式設計**: 完美支援桌面、平板、手機各種螢幕
+   - **流暢動畫**: 所有操作都有平滑的視覺過渡效果
+   - **智能去重**: 自動檢查標題避免重複新增
+   - **安全權限**: 只有管理員能新增書籍，普通用戶僅可瀏覽
 
 ### 書籍管理使用
 
@@ -316,12 +349,44 @@ BookVectorMVC 是一個基於 .NET Core 8 開發的智能書籍管理系統，�
 - **`appsettings.json`**: 主要配置檔案
 - **`BookVectorMVC.Core.csproj`**: 專案檔案和套件引用
 
+## 🔧 進階配置
+
+### AI 服務配置
+
+#### Perplexity AI 完整配置
+```powershell
+# 基本設定
+$env:PERPLEXITY_API_KEY = "pplx-your-api-key"
+
+# 搜尋行為調整
+$env:PERPLEXITY_MAX_RESULTS = "8"              # 搜尋結果數量 (1-10)
+$env:PERPLEXITY_TEMPERATURE = "0.2"            # 創意程度 (0.0-1.0)
+$env:PERPLEXITY_MAX_TOKENS = "2000"            # 回應長度限制
+
+# 搜尋來源限制
+$env:PERPLEXITY_SEARCH_DOMAINS = "books.google.com,amazon.com,goodreads.com,eslite.com"
+
+# 模型選擇 (可選)
+$env:PERPLEXITY_MODEL = "llama-3.1-sonar-small-128k-online"
+```
+
+#### 智能搜尋回退機制
+1. **第一層**: Perplexity AI (主要) - 智能語義搜尋
+2. **第二層**: Google Books API (備用) - 傳統關鍵字搜尋  
+3. **第三層**: 模擬資料 (保底) - 確保功能不中斷
+
+### 效能最佳化建議
+- **API額度管理**: 監控 Perplexity API 使用量避免超額
+- **快取策略**: 考慮實作搜尋結果快取減少 API 呼叫
+- **回應時間**: 設定適當的 timeout 避免長時間等待
+
 ## 🔐 安全性考量
 
 ### API 金鑰管理
-- ✅ 使用 `appsettings.json` 管理敏感資訊
-- ✅ 支援環境變數覆寫
-- ✅ 建議在生產環境使用 Azure Key Vault
+- ✅ 使用環境變數存放敏感的 API 金鑰
+- ✅ Jina AI 金鑰可在 `appsettings.json` 中管理
+- ✅ 支援環境變數覆寫配置檔案設定
+- ✅ 建議在生產環境使用 Azure Key Vault 或類似服務
 
 ### 資料驗證
 - ✅ 伺服器端資料驗證
