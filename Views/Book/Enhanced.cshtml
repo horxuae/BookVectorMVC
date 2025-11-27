@@ -1,16 +1,10 @@
 @model IEnumerable<BookVectorMVC.Models.Book>
 @{
-    ViewBag.Title = "書籍管理系統";
+    ViewBag.Title = "增強版書籍管理";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>@ViewBag.Title</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+@section Scripts {
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -139,10 +133,13 @@
             background-clip: text;
             font-weight: 700;
         }
+
+        .card-header {
+            padding: 0.5rem 0.25rem !important;
+        }
     </style>
-</head>
-<body>
-    <div class="container-fluid animate-fade-in">
+
+<div class="container animate-fade-in">
         <!-- Header -->
         <div class="modern-card mb-5">
             <div class="gradient-header text-center">
@@ -207,28 +204,45 @@
                         <h5 class="mb-0">📖 新增書籍</h5>
                     </div>
                     <div class="card-body">
-                        @using (Html.BeginForm("Add", "EnhancedBook", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
                         {
-                            <div class="mb-3">
-                                <label class="form-label">📖 書籍標題 *</label>
-                                <input name="title" class="form-control" placeholder="請輸入書籍標題" required />
-                                <div class="invalid-feedback">請輸入書籍標題</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">📝 書籍描述</label>
-                                <textarea name="description" class="form-control" rows="3" placeholder="請輸入書籍描述（選填）"></textarea>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">📍 書籍位置</label>
-                                <input name="position" class="form-control" placeholder="例如: A-12, B-05" />
-                                <div class="form-text">書架標籤或位置編號</div>
-                            </div>
+                            @using (Html.BeginForm("Add", "EnhancedBook", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">📖 書籍標題 *</label>
+                                    <input name="title" class="form-control" placeholder="請輸入書籍標題" required />
+                                    <div class="invalid-feedback">請輸入書籍標題</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">📝 書籍描述</label>
+                                    <textarea name="description" class="form-control" rows="3" placeholder="請輸入書籍描述（選填）"></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">📍 書籍位置</label>
+                                    <input name="position" class="form-control" placeholder="例如: A-12, B-05" />
+                                    <div class="form-text">書架標籤或位置編號</div>
+                                </div>
 
-                            <button type="submit" class="btn btn-modern btn-success-modern w-100">
-                                ➕ 新增書籍
-                            </button>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-modern btn-success-modern">
+                                        ➕ 新增書籍
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 只有管理員才能新增書籍
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> 請先 <a href="@Url.Action("Login", "Account")">登入</a> 以使用書籍管理功能
+                            </div>
                         }
                         
                     </div>
@@ -237,34 +251,38 @@
 
             <!-- 右側：搜尋功能 -->
             <div class="col-lg-6">
-                <div class="modern-card h-100">
+                <div class="modern-card h-100 d-flex flex-column">
                     <div class="card-header text-white" style="background: var(--warning-gradient); border-radius: 20px 20px 0 0;">
                         <h5 class="mb-0">🔍 智能搜尋</h5>
                     </div>
-                    <div class="card-body">
-                        <form id="searchForm">
-                            <div class="mb-3">
-                                <label class="form-label">🎯 關鍵字搜尋 (向量相似度)</label>
-                                <input id="searchQuery" class="form-control" placeholder="請輸入搜尋關鍵字" />
-                                <div class="form-text">使用向量算法找出最相關的書籍</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">📍 位置搜尋 (精確匹配)</label>
-                                <input id="searchPosition" class="form-control" placeholder="例如: A-12" />
-                                <div class="form-text">根據書架位置精確查找</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">📖 書名搜尋 (模糊匹配)</label>
-                                <input id="searchTitle" class="form-control" placeholder="請輸入書名關鍵字" />
-                                <div class="form-text">根據書名進行模糊查詢</div>
+                    <div class="card-body d-flex flex-column">
+                        <form id="searchForm" class="d-flex flex-column h-100">
+                            <div class="flex-grow-1">
+                                <div class="mb-3">
+                                    <label class="form-label">🎯 關鍵字搜尋 (向量相似度)</label>
+                                    <input id="searchQuery" class="form-control" placeholder="請輸入搜尋關鍵字" />
+                                    <div class="form-text">使用向量算法找出最相關的書籍</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">📍 位置搜尋 (精確匹配)</label>
+                                    <input id="searchPosition" class="form-control" placeholder="例如: A-12" />
+                                    <div class="form-text">根據書架位置精確查找</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">📖 書名搜尋 (模糊匹配)</label>
+                                    <input id="searchTitle" class="form-control" placeholder="請輸入書名關鍵字" />
+                                    <div class="form-text">根據書名進行模糊查詢</div>
+                                </div>
                             </div>
 
-                            <div class="d-grid gap-2">
-                                <button type="button" id="btnSearch" class="btn btn-modern btn-warning-modern">
-                                    🔍 開始搜尋
-                                </button>
+                            <div class="mt-auto">
+                                <div class="d-grid gap-2">
+                                    <button type="button" id="btnSearch" class="btn btn-modern btn-warning-modern">
+                                        🔍 開始搜尋
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -356,27 +374,21 @@
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
         <div id="toastContainer"></div>
     </div>
-
-    @if (TempData["Success"] != null)
-    {
-        <script>
-            $(document).ready(function() {
-                showToast('success', '成功', '@TempData["Success"]');
-            });
-        </script>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <script>
-            $(document).ready(function() {
-                showToast('error', '錯誤', '@TempData["Error"]');
-            });
-        </script>
-    }
+</div>
 
     <script>
         $(document).ready(function () {
+            // TempData 通知處理
+            @if (TempData["Success"] != null)
+            {
+                @:showToast('success', '成功', '@TempData["Success"]');
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                @:showToast('error', '錯誤', '@TempData["Error"]');
+            }
+            
             // 搜尋功能
             $('#btnSearch').click(function () {
                 const query = $('#searchQuery').val();
@@ -442,5 +454,4 @@
             }, 6000);
         }
     </script>
-</body>
-</html>
+}

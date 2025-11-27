@@ -45,12 +45,19 @@ public class EnhancedBookController : Controller
     }
 
     /// <summary>
-    /// 新增書籍 (增強版)
+    /// 新增書籍 (增強版) - 僅限管理員
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(BookViewModel model, CancellationToken cancellationToken = default)
     {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能新增書籍";
+            return RedirectToAction(nameof(Enhanced));
+        }
+
         if (!ModelState.IsValid)
         {
             TempData["Error"] = "請確認輸入資料的正確性";
@@ -187,12 +194,19 @@ public class EnhancedBookController : Controller
     //}
 
     /// <summary>
-    /// 批量更新向量
+    /// 批量更新向量 - 僅限管理員
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateAllVectors(CancellationToken cancellationToken = default)
     {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能執行批量更新向量";
+            return RedirectToAction(nameof(Enhanced));
+        }
+
         try
         {
             var updatedCount = await _bookService.UpdateAllVectorsAsync(cancellationToken);
