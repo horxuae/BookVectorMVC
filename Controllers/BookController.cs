@@ -38,12 +38,19 @@ public class BookController : Controller
     }
 
     /// <summary>
-    /// 新增書籍
+    /// 新增書籍 - 僅限管理員
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(BookViewModel model, CancellationToken cancellationToken = default)
     {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能新增書籍";
+            return RedirectToAction(nameof(Index));
+        }
+
         if (!ModelState.IsValid)
         {
             TempData["Error"] = "請確認輸入資料的正確性";
@@ -132,12 +139,105 @@ public class BookController : Controller
     }
 
     /// <summary>
-    /// 刪除書籍
+    /// 編輯書籍頁面 - 僅限管理員
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken = default)
+    {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能編輯書籍";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            var book = await _bookService.GetBookByIdAsync(id, cancellationToken);
+            if (book == null)
+            {
+                TempData["Error"] = "找不到指定的書籍";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = new BookVectorMVC.Models.ViewModels.EditBookViewModel
+            {
+                BookId = book.BookId,
+                Title = book.Title,
+                Description = book.Description,
+                Position = book.Position
+            };
+
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading book for edit: {BookId}", id);
+            TempData["Error"] = "載入書籍資料時發生錯誤";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    /// <summary>
+    /// 編輯書籍處理 - 僅限管理員
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(BookVectorMVC.Models.ViewModels.EditBookViewModel model, CancellationToken cancellationToken = default)
+    {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能編輯書籍";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        try
+        {
+            var book = await _bookService.GetBookByIdAsync(model.BookId, cancellationToken);
+            if (book == null)
+            {
+                TempData["Error"] = "找不到指定的書籍";
+                return RedirectToAction(nameof(Index));
+            }
+
+            book.Title = model.Title;
+            book.Description = model.Description;
+            book.Position = model.Position;
+
+            await _bookService.UpdateBookAsync(book, cancellationToken);
+            TempData["Success"] = $"成功更新書籍：{book.Title}";
+            _logger.LogInformation("Successfully updated book: {Title} (ID: {BookId})", book.Title, book.BookId);
+            
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating book: {BookId}", model.BookId);
+            TempData["Error"] = "更新書籍時發生錯誤";
+            return View(model);
+        }
+    }
+
+    /// <summary>
+    /// 刪除書籍 - 僅限管理員
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能刪除書籍";
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
             var success = await _bookService.DeleteBookAsync(id, cancellationToken);
@@ -161,12 +261,19 @@ public class BookController : Controller
     }
 
     /// <summary>
-    /// 更新所有書籍向量
+    /// 更新所有書籍向量 - 僅限管理員
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateVectors(CancellationToken cancellationToken = default)
     {
+        // 檢查權限
+        if (!User.Identity?.IsAuthenticated == true || !User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "只有管理員才能更新向量";
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
             var updatedCount = await _bookService.UpdateAllVectorsAsync(cancellationToken);

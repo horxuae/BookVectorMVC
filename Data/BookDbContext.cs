@@ -10,6 +10,7 @@ public class BookDbContext : DbContext
     }
 
     public DbSet<Book> Books { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,6 +22,23 @@ public class BookDbContext : DbContext
             entity.Property(e => e.Description).HasColumnType("nvarchar(max)");
             entity.Property(e => e.Position).HasMaxLength(100);
             entity.Property(e => e.Vector).HasColumnType("nvarchar(max)").IsRequired();
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).ValueGeneratedOnAdd();
+            entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PasswordHash).IsRequired();
+            entity.Property(e => e.DisplayName).HasMaxLength(100);
+            entity.Property(e => e.Role).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            // 建立唯一索引
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);

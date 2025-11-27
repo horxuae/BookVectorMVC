@@ -1,0 +1,37 @@
+@model BookVectorMVC.Models.ViewModels.EditBookViewModel
+@{
+    ViewBag.Title = "編輯書籍";
+    Layout = "_Layout";
+}
+
+<h2>編輯書籍</h2>
+
+<form asp-controller="Book" asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.BookId)
+    
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" style="max-width:400px" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" style="max-width:400px;height:80px"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    
+    <div class="mb-3">
+        <label asp-for="Position" class="form-label"></label>
+        <input asp-for="Position" class="form-control" style="max-width:200px" />
+        <span asp-validation-for="Position" class="text-danger"></span>
+    </div>
+    
+    <button type="submit" class="btn btn-success">更新書籍</button>
+    <a asp-controller="Book" asp-action="Index" class="btn btn-secondary">取消</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

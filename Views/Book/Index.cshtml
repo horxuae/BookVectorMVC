@@ -6,23 +6,45 @@
 
 <h2>書籍管理</h2>
 
-<h3>新增書籍</h3>
-<form asp-controller="Book" asp-action="Add" method="post" class="mb-4">
-    @Html.AntiForgeryToken()
-    <div class="mb-3">
-        <label class="form-label">書名</label>
-        <input name="title" class="form-control" style="max-width:400px" required />
+@if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+{
+    <h3>新增書籍</h3>
+    <form asp-controller="Book" asp-action="Add" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="mb-3">
+            <label class="form-label">📖 書名</label>
+            <input name="title" class="form-control" style="max-width:400px" placeholder="請輸入書籍標題" required />
+            <div class="form-text">書籍的主要標題</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">📝 描述</label>
+            <textarea name="description" class="form-control" style="max-width:400px;height:80px" placeholder="請輸入書籍描述（選填）"></textarea>
+            <div class="form-text">書籍的詳細描述或摘要</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">📍 位置</label>
+            <input name="position" class="form-control" style="max-width:400px" placeholder="例如: A-12, B-05" />
+            <div class="form-text">書架標籤或位置編號</div>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" style="max-width:400px">
+                ➕ 新增書籍
+            </button>
+        </div>
+    </form>
+}
+else if (User.Identity?.IsAuthenticated == true)
+{
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 只有管理員才能新增書籍
     </div>
-    <div class="mb-3">
-        <label class="form-label">描述</label>
-        <textarea name="description" class="form-control" style="max-width:400px;height:80px"></textarea>
+}
+else
+{
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> 請先 <a href="@Url.Action("Login", "Account")">登入</a> 以使用書籍管理功能
     </div>
-    <div class="mb-3">
-        <label class="form-label">位置 (例如: A-12)</label>
-        <input name="position" class="form-control" style="max-width:200px" />
-    </div>
-    <button type="submit" class="btn btn-primary">新增書籍</button>
-</form>
+}
 
 <hr />
 
@@ -39,12 +61,13 @@
 <hr />
 
 <h3>目前書籍</h3>
-<table border="1" cellpadding="4" cellspacing="0">
+<table border="1" cellpadding="4" cellspacing="0" class="table table-striped">
     <tr class="text-center">
         <th>ID</th>
         <th>Title</th>
         <th>Description</th>
         <th>Position</th>
+        <th>操作</th>
     </tr>
     @foreach (var b in Model)
     {
@@ -53,6 +76,17 @@
             <td>@b.Title</td>
             <td>@b.Description</td>
             <td>@b.Position</td>
+            <td>
+                <a href="@Url.Action("Details", "Book", new { id = b.BookId })" class="btn btn-sm btn-outline-info">詳細</a>
+                @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                {
+                    <a href="@Url.Action("Edit", "Book", new { id = b.BookId })" class="btn btn-sm btn-outline-primary">編輯</a>
+                    <form method="post" asp-action="Delete" asp-route-id="@b.BookId" style="display:inline;" onsubmit="return confirm('確定要刪除此書籍嗎？');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                    </form>
+                }
+            </td>
         </tr>
     }
 </table>
